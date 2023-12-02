@@ -53,7 +53,31 @@ def does_have_symbol(word: str, coords: tuple[int, int], symbols: dict[tuple[int
     before_or_after = (x_start, y) in symbols or (x_end, y) in symbols
     return before_or_after
 
-# def get_adjacent_numbers(word)
+def get_adjacent_numbers(coord: tuple[int,int], words: dict[tuple[int,int], str], max_x: int) -> bool:
+    results: list[int] = []
+    for x in range(0, max_x):
+        if (x, coord[1] - 1) in words:
+            value = words[(x, coord[1] - 1)]
+            value_x = x
+            value_x_end = x + len(value)
+            if coord[0] >= (value_x - 1) and coord[0] <= (value_x_end):
+                results.append(value)
+        
+        if (x, coord[1] + 1) in words:
+            value = words[(x, coord[1] + 1)]
+            value_x = x
+            value_x_end = x + len(value)
+            if coord[0] >= (value_x - 1) and coord[0] <= (value_x_end):
+                results.append(value)
+            
+        if (x, coord[1]) in words:    
+            value = words[(x, coord[1])]
+            value_x = x
+            value_x_end = x + len(value)
+            if value_x_end == coord[0] or value_x == coord[0] + 1:
+                results.append(value)
+        
+    return results
 
 
 if __name__ == "__main__":
@@ -69,6 +93,11 @@ if __name__ == "__main__":
     
     print(total_adjacent_values)
 
-    # for key, val in data[1].items():
-    #     if val == "*":
-    #         print(key)
+    total_ratios = 0
+    for key, val in data[1].items():
+        if val == "*":
+            adjacents = get_adjacent_numbers(key, data[0], len(lines[0]))
+            if len(adjacents) == 2:
+                total_ratios = total_ratios + (int(adjacents[0]) * int(adjacents[1]))
+    
+    print(total_ratios)
