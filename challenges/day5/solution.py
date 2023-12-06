@@ -68,28 +68,6 @@ def parse_dict(section_data: list[str]):
         
     return section_name, InstructionMap(data)
 
-def get_value(maps: InstructionMap, val: int) -> int:
-    return maps.get_result(val)
-
-
-def get_location(instructions: dict, seed) -> int:
-    soil = get_value(instructions["seed-to-soil"], seed)
-    fert = get_value(instructions["soil-to-fertilizer"], soil)
-    water = get_value(instructions["fertilizer-to-water"], fert)
-    light = get_value(instructions["water-to-light"], water)
-    temp = get_value(instructions["light-to-temperature"], light)
-    humid = get_value(instructions["temperature-to-humidity"], temp)
-    location = get_value(instructions["humidity-to-location"], humid)
-    return {
-        "soil": soil,
-        "fert": fert,
-        "water": water,
-        "light": light,
-        "temp": temp,
-        "humid": humid,
-        "location": location
-    }
-
 def flat(inp):
     data = []
     for val in inp:
@@ -146,12 +124,10 @@ if __name__ == "__main__":
         min_loc = min(locs)
         results.append(min_loc)
 
-        if min_loc[0] == 0:
-            print(f"Working on {pair}")
-            for key, val in resu.items():
-                print(f"{key}: {min(val)}")
-            # print(f"Location ranges {locs}")
-            print("=====================================")
+        print(f"Working on {pair}")
+        for key, val in resu.items():
+            print(f"{key}: Min: {min(val)}")
+        print("=====================================")
         
     print(min(results))
         
