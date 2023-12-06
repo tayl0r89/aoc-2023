@@ -1,66 +1,59 @@
 
+
+def to_from_to(val):
+    return (val[0], val[0] + val[2] - 1, val[1])
+
+
+def get_intersection(t1, t2):
+    if t1[1] < t2[0]:
+        return None
+    if t1[0] > t2[1]:
+        return None
+
+    return (max(t1[0], t2[0]), min(t1[1], t2[1]))
+
+def get_ranges(input, ranges):
+    data = input
+    results = []
+    ranges = sorted(ranges)
+
+    if data[0] > ranges[len(ranges) - 1][1]:
+        results.append(data)
+        return results
+
+    for range in ranges:
+        if data[0] < range[0]:
+            if data[1] < range[1]:
+                results.append((data[0], data[1]))
+                return results
+            else:
+                results.append((data[0], range[0] - 1))
+                data = (range[0], data[1])
+
+        intersection = get_intersection(data, range)
+        if intersection:
+            offset = intersection[0] - range[0]
+            intersection_length = intersection[1] - intersection[0]
+            mapped = range[2] + offset
+            mapped_end = mapped + intersection_length
+            results.append((mapped, mapped_end))
+            if intersection[1] + 1 >= data[1]:
+                return results
+            data = (intersection[1] + 1, data[1])
+
+    if data[0] != data[1] and data[0] + 1 > ranges[len(ranges) - 1][1]:
+        results.append((data[0] + 1, data[1]))
+
+    return results
+
+
 class InstructionMap():
 
-    bounds: list[tuple[int, int, int]]
-
     def __init__(self, bounds):
-        self.bounds = sorted(bounds)
-        print(self.bounds)
-    
-    def get_result(self, val: int) -> int | None:
-        if val < self.bounds[0][0]:
-            return val
-
-        if val > self.bounds[len(self.bounds) - 1][0] + self.bounds[len(self.bounds) - 1][2]:
-            return val
-        
-        for bound in self.bounds:
-            if val >= bound[0] and val < bound[0] + bound[2]: 
-                return bound[1] + (val - bound[0])
-        
-        return val
+        self.ranges = sorted(list(map(to_from_to, bounds)))
     
     def get_range_results(self, val: tuple[int,int]) -> list[tuple[int, int]]:
-        results = []
-        i = 0
-        start = val[0]
-        count = val[1]
-        
-        print(f"Processing from {start} to {start + count}")
-        print(f"Bounds are {self.bounds}")
-        i = 0
-        while i < len(self.bounds) and count > 0:
-            sec_start = self.bounds[i][0]
-            sec_dest = self.bounds[i][1]
-            sec_end = self.bounds[i][0] + self.bounds[i][2]
-            print(f"Assessing bounds {(sec_start, sec_end)}")
-
-            if start < sec_start:
-                before_length = sec_start - start
-                to_add_size = min(before_length, count)
-                # Use the normal value here as its out of mapping range
-                print(f"Adding {start} for {to_add_size} before the section")
-                results.append((start, to_add_size))
-                count = count - to_add_size
-                start = start + to_add_size
-                print(f"Start is now {start} and count is now {count}")
-            
-            if start >= sec_start and start < sec_end:
-                start_offset = start - sec_start
-                to_add_size = min(count, sec_end - sec_start)
-                # Use destination here
-                print(f"Adding {sec_dest + start_offset} for {to_add_size}")
-                results.append((sec_dest + start_offset, to_add_size))
-                start = sec_start + to_add_size
-                count = count - to_add_size
-            
-            i = i + 1
-        
-        if count > 0:
-            print(f"Adding {start} for {count} at the end")
-            results.append((start, count))
-        
-        return results
+        return get_ranges(val, self.ranges)
 
 def parse_numbers(line: str) -> list[int]:
     return [int(x) for x in line.strip().split(" ")]
@@ -87,7 +80,15 @@ def get_location(instructions: dict, seed) -> int:
     temp = get_value(instructions["light-to-temperature"], light)
     humid = get_value(instructions["temperature-to-humidity"], temp)
     location = get_value(instructions["humidity-to-location"], humid)
-    return location
+    return {
+        "soil": soil,
+        "fert": fert,
+        "water": water,
+        "light": light,
+        "temp": temp,
+        "humid": humid,
+        "location": location
+    }
 
 def flat(inp):
     data = []
@@ -96,14 +97,22 @@ def flat(inp):
     return data
 
 def get_location_tuples(instructions: dict, seed_pair: tuple[int,int]):
-    soils = instructions["seed-to-soil"].get_range_results(seed_pair)
-    ferts = flat([instructions["soil-to-fertilizer"].get_range_results(x) for x in soils])
-    waters = flat([instructions["fertilizer-to-water"].get_range_results(x) for x in ferts])
-    lights = flat([instructions["water-to-light"].get_range_results(x) for x in waters])
-    temps = flat([instructions["light-to-temperature"].get_range_results(x) for x in lights])
-    humids = flat([instructions["temperature-to-humidity"].get_range_results(x) for x in temps])
-    locs = flat([instructions["humidity-to-location"].get_range_results(x) for x in humids])
-    return locs
+    soils = sorted(instructions["seed-to-soil"].get_range_results((seed_pair[0], seed_pair[0] + seed_pair[1] - 1)))
+    ferts = sorted(flat([instructions["soil-to-fertilizer"].get_range_results(x) for x in soils]))
+    waters = sorted(flat([instructions["fertilizer-to-water"].get_range_results(x) for x in ferts]))
+    lights = sorted(flat([instructions["water-to-light"].get_range_results(x) for x in waters]))
+    temps = sorted(flat([instructions["light-to-temperature"].get_range_results(x) for x in lights]))
+    humids = sorted(flat([instructions["temperature-to-humidity"].get_range_results(x) for x in temps]))
+    locs = sorted(flat([instructions["humidity-to-location"].get_range_results(x) for x in humids]))
+    return {
+        "soil": soils,
+        "fert": ferts,
+        "water": waters,
+        "light": lights,
+        "temp": temps,
+        "humid": humids,
+        "location": locs
+    }
 
 
 if __name__ == "__main__":
@@ -132,10 +141,17 @@ if __name__ == "__main__":
     results = []
 
     for pair in seed_pairs:
-        locs = get_location_tuples(instructions, pair)
-        results.append(min(locs))
+        resu = get_location_tuples(instructions, pair)
+        locs = resu["location"]
+        min_loc = min(locs)
+        results.append(min_loc)
+
+        if min_loc[0] == 0:
+            print(f"Working on {pair}")
+            for key, val in resu.items():
+                print(f"{key}: {min(val)}")
+            # print(f"Location ranges {locs}")
+            print("=====================================")
         
-    
-    print(results)
     print(min(results))
         
