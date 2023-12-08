@@ -48,8 +48,11 @@ if __name__ == "__main__":
 
         counts = []
         for val in data:
-            # Pre verified against input that all routes end at the end of directions
-            count, dirs, node = traverse(routes, directions, val)            
+            # Pre verified against input that all routes end at the end of direction string
+            # Pre verified that all inputs have one single output
+            # Pre verified that once output is reached, it reaches the same output in the same step count.
+            # So LCM can be used after one traversal.
+            count, dirs, node = traverse(routes, directions, val)        
             counts.append(count)
 
         print(f"Part 2 solution is: {math.lcm(*counts)}")
