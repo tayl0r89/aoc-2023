@@ -19,14 +19,6 @@ def to_binary_arr(arr: list[int]) -> list[int]:
     return result
 
 
-def arr_to_flip_bit(point: int, binary_diff: int, row_num: int) -> tuple[int,int]:
-    y = row_num
-    x = to_position(binary_diff)
-    
-    return (x,y)
-
-
-
 def compare_binary(before: list[str], after: list[str]) -> int:
     before_bin = to_binary_arr([0 if d == "." else 1 for d in before])
     after_bin = to_binary_arr([0 if d == "." else 1 for d in after])
@@ -60,7 +52,7 @@ def get_vertical_line_symettry(pane: list[list[str]], mult: int = 1) -> tuple[in
             bin_comp = compare_binary(before, after)
             if not bin_comp == 0:
                 # position = math.sqrt(bin_comp)
-                non_matches.append((i, bin_comp, row_num))
+                non_matches.append((i * mult, bin_comp))
                 if len(non_matches) > 1:
                     break
         
@@ -70,8 +62,9 @@ def get_vertical_line_symettry(pane: list[list[str]], mult: int = 1) -> tuple[in
             non_match_rows.append(non_matches[0])
 
     if len(non_match_rows) == 1:
-        potential_change.append(arr_to_flip_bit(non_match_rows[0][0], non_match_rows[0][1], non_match_rows[0][2]))
+        potential_change.append((non_match_rows[0][0], to_position(non_match_rows[0][1])))
 
+    print(non_matches)
     return (count, potential_change)
 
 def transpose(pane: list[list[str]]) -> list[list[str]]:
@@ -115,32 +108,28 @@ if __name__ == "__main__":
         part_1_total = part_1_total + horizontal_line_count
     print(f"Part 1: {part_1_total}")
 
-    for pane in data:
+    for i, pane in enumerate(data):
+        if i == 73:
+            print_pane(pane)
+            
         vertical_line_count, v_changes = get_vertical_line_symettry(pane)
         horizontal_line_count, h_changes = get_horizontal_line_symettry(pane)
 
-        print(f"Before flip {vertical_line_count} and {horizontal_line_count}")
+        if i == 73:
+            print(v_changes)
+            print(h_changes)
+            break
 
         if len(v_changes) > 0:
-            x = v_changes[0][0]
-            y = v_changes[0][1]
-            to_flip = pane[y][x]
-            to_value = "." if to_flip == "#" else "#"
-            pane[y][x] = to_value
-            print(f"Flipping for vert reflection {(x,y)} from {to_flip} to {to_value}")
-            vertical_line_count, v_changes = get_vertical_line_symettry(pane)
-            part_2_total = part_2_total + vertical_line_count
-            print(f"Adding new vertical of {vertical_line_count}")
+            index_of_reflection = v_changes[0][0]
+            print(f"Found potential new vertical line at {index_of_reflection}")
+            part_2_total = part_2_total + index_of_reflection
         elif len(h_changes) > 0:
             # Flip for transpose?
-            x = h_changes[0][1]
-            y = h_changes[0][0]
-            to_flip = pane[y][x]
-            to_value = "." if to_flip == "#" else "#"
-            pane[y][x] = to_value
-            print(f"Flipping for horiz reflection {(x,y)} from {to_flip} to {to_value}")
-            horizontal_line_count, h_changes = get_horizontal_line_symettry(pane)
-            part_2_total = part_2_total + horizontal_line_count
-            print(f"Adding new horizontal of {horizontal_line_count}")
+            index_of_reflection = h_changes[0][0]
+            print(f"Found potential new horizontal line at {index_of_reflection}")
+            part_2_total = part_2_total + index_of_reflection
+        else:
+            raise ValueError(f"No flip found at {i}")
 
     print(f"Part 2: {part_2_total}")
