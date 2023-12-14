@@ -1,5 +1,6 @@
 import math
 
+
 def compare(before: list[str], after: list[str]) -> bool:
     to_test = min(len(before), len(after))
     before.reverse()
@@ -13,59 +14,58 @@ def to_binary_arr(arr: list[int]) -> list[int]:
     result = []
     for i, val in enumerate(arr):
         if val == 1:
-            result.append(math.pow(val, i))
+            result.append(int(math.pow(2, i)))
         else:
             result.append(0)
     return result
 
 
 def compare_binary(before: list[str], after: list[str]) -> int:
-    before_bin = to_binary_arr([0 if d == "." else 1 for d in before])
-    after_bin = to_binary_arr([0 if d == "." else 1 for d in after])
-    before_bin.reverse()
-    to_test = min(len(before_bin), len(after_bin))
-    before_count = 0
-    after_count = 0
+    to_test = min(len(before), len(after))
+    before_test = before[-to_test:]
+    after_test = after[0: to_test]
+    before_test.reverse()
+    differences = 0
+    different_at = None
     for i in range(0, to_test):
-        before_count = before_count + before_bin[i]
-        after_count = after_count + after_bin[i]
-    
-    difference = abs(before_count - after_count)
-    return difference
+        if before_test[i] != after_test[i]:
+            differences = differences + 1
+            different_at = i
 
-def to_position(bin: int) -> int:
-    if bin == 1:
-        return 0
-    if bin == 2:
-        return 1
-    return math.sqrt(bin)
+    return (differences, different_at)
 
-def get_vertical_line_symettry(pane: list[list[str]], mult: int = 1) -> tuple[int, tuple[int,int]]:
+
+def get_vertical_line_symettry(
+    pane: list[list[str]], mult: int = 1
+) -> tuple[int, list[tuple[int, int]]]:
     count = 0
     potential_change = []
-    non_match_rows = []
+    possibile_points_of_reflection = []
     for i in range(1, len(pane[0])):
+        print(" ")
         non_matches = []
-        for row_num, row in enumerate(pane):
+        for row in pane:
             before = row[:i]
             after = row[i:]
-            bin_comp = compare_binary(before, after)
-            if not bin_comp == 0:
-                # position = math.sqrt(bin_comp)
-                non_matches.append((i * mult, bin_comp))
-                if len(non_matches) > 1:
-                    break
-        
+            differences, different_at = compare_binary(before, after)
+            if differences > 0:
+                non_matches.append((i * mult, differences, different_at))
+
         if len(non_matches) == 0:
             count = count + (i * mult)
         elif len(non_matches) == 1:
-            non_match_rows.append(non_matches[0])
+            possibile_points_of_reflection.append(non_matches[0])
 
-    if len(non_match_rows) == 1:
-        potential_change.append((non_match_rows[0][0], to_position(non_match_rows[0][1])))
+    if len(possibile_points_of_reflection) == 1:
+        potential_change.append(
+            (
+                possibile_points_of_reflection[0][0],
+                possibile_points_of_reflection[0][1],
+            )
+        )
 
-    print(non_matches)
     return (count, potential_change)
+
 
 def transpose(pane: list[list[str]]) -> list[list[str]]:
     data = []
@@ -76,13 +76,16 @@ def transpose(pane: list[list[str]]) -> list[list[str]]:
         data.append(new_row)
     return data
 
-def get_horizontal_line_symettry(pane: list[list[str]]) -> tuple[int, tuple[int,int]]:
+
+def get_horizontal_line_symettry(pane: list[list[str]]) -> tuple[int, tuple[int, int]]:
     transposed = transpose(pane)
     return get_vertical_line_symettry(transposed, mult=100)
+
 
 def print_pane(pane: list[list[str]]) -> None:
     for line in pane:
         print("".join(line))
+
 
 if __name__ == "__main__":
     data = []
@@ -98,7 +101,7 @@ if __name__ == "__main__":
 
         if len(pane) > 0:
             data.append(pane)
-    
+
     part_1_total = 0
     part_2_total = 0
     for pane in data:
@@ -109,22 +112,23 @@ if __name__ == "__main__":
     print(f"Part 1: {part_1_total}")
 
     for i, pane in enumerate(data):
-        if i == 73:
-            print_pane(pane)
-            
+        print(" ")
+        print(f"=========== pattern {i} ============")
+        print(" ")
+        print_pane(pane)
+        print(" ")
+
+        print("PROCESSING VERTICAL")
         vertical_line_count, v_changes = get_vertical_line_symettry(pane)
+        print(" ")
+        print("PROCESSING HORIZONTAL")
         horizontal_line_count, h_changes = get_horizontal_line_symettry(pane)
 
-        if i == 73:
-            print(v_changes)
-            print(h_changes)
-            break
-
-        if len(v_changes) > 0:
+        if len(v_changes) == 1:
             index_of_reflection = v_changes[0][0]
             print(f"Found potential new vertical line at {index_of_reflection}")
             part_2_total = part_2_total + index_of_reflection
-        elif len(h_changes) > 0:
+        elif len(h_changes) == 1:
             # Flip for transpose?
             index_of_reflection = h_changes[0][0]
             print(f"Found potential new horizontal line at {index_of_reflection}")
