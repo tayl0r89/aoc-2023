@@ -172,7 +172,7 @@ if __name__ == "__main__":
     print(f"We ended at {ended}")
     print(f"With sequence {current_sequence}")
     
-    left_to_do = total - ended
+    left_to_do = total - ended - 1
 
     print(f"We had {left_to_do} cycles left")
 
