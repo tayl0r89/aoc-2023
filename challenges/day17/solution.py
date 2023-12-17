@@ -53,6 +53,7 @@ class Node:
     def __init__(self, grid, coords, heading, parent = None) -> None:
         self.parent = parent
         self.node_weight = get_value_at(grid, coords)
+        self.path_weight = get_total_node_value(self)
         self.coords = coords
         self.heading = heading
 
@@ -110,8 +111,8 @@ if __name__ == "__main__":
     with open("input.txt", "r", encoding="utf-8") as file:
         grid = [list(map(int,[*line.strip()])) for line in file.readlines()]
     
-    # target = (len(grid) - 1, len(grid[0]) -1)
-    target = (2,0)
+    target = (len(grid) - 1, len(grid[0]) -1)
+    # target = (2,0)
     total = sum(map(lambda x: sum(x), grid))
 
     root = Node(grid, (0,0), None)
@@ -127,7 +128,7 @@ if __name__ == "__main__":
 
         print("==========")
         for val in to_explore:
-            print(f"{val.coords} - {val.node_weight}")
+            print(f"{val.coords} - {val.path_weight}")
         expand = to_explore[0]
         next_node = expand.take_cheapest(nodes, grid)
 
@@ -137,7 +138,7 @@ if __name__ == "__main__":
                 not_found = False
 
             to_explore.append(next_node)
-            to_explore = sorted(to_explore, key=lambda x: x.node_weight)
+            to_explore = sorted(to_explore, key=lambda x: x.path_weight)
             nodes[next_node.key()] = next_node
         else:
             # No options so remove this node from nodes to explore
